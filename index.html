@@ -379,12 +379,14 @@
                     </div>
                 </div>
 
+                <button class="btn btn-secondary btn-sm" id="micBtn" type="button" title="Dictate text">🎤 Speak</button>
                 <textarea id="sourceText" placeholder="Start writing here… (or paste any text)" spellcheck="false"></textarea>
 
                 <div class="lang-bar">
                     <div class="lang-selector">
                         <label for="sourceLang">From</label>
                         <select id="sourceLang">
+                            <option value="auto">Auto detect</option>
                             <option value="en">English</option>
                             <option value="es">Spanish</option>
                             <option value="fr">French</option>
@@ -397,6 +399,9 @@
                             <option value="zh">Chinese</option>
                             <option value="ar">Arabic</option>
                             <option value="hi">Hindi</option>
+                            <option value="id">Indonesian</option>
+                            <option value="ur">Urdu</option>
+                            <option value="pa">Punjabi</option>
                         </select>
                     </div>
                     <div class="flex-spacer"></div>
@@ -438,6 +443,9 @@
                             <option value="zh">Chinese</option>
                             <option value="ar">Arabic</option>
                             <option value="hi">Hindi</option>
+                            <option value="id">Indonesian</option>
+                            <option value="ur">Urdu</option>
+                            <option value="pa">Punjabi</option>
                         </select>
                     </div>
                     <div class="flex-spacer"></div>
@@ -485,7 +493,7 @@
             const langNames = {
                 en: 'English', es: 'Spanish', fr: 'French', de: 'German',
                 it: 'Italian', pt: 'Portuguese', ru: 'Russian', ja: 'Japanese',
-                ko: 'Korean', zh: 'Chinese', ar: 'Arabic', hi: 'Hindi'
+                ko: 'Korean', zh: 'Chinese', ar: 'Arabic', hi: 'Hindi', id: 'Indonesian', ur: 'Urdu', pa: 'Punjabi', auto: 'Auto detect'
             };
 
             // ---- Helper: update character counter ----
@@ -559,88 +567,53 @@
                 }
             }
 
-            // ---- Translation function (simulated, but realistic) ----
-            // Since this is a front-end demo, we simulate translation.
-            // But we want it to feel useful: we provide a fake translation by
-            // reversing, adding prefix, or simple mapping — but better: 
-            // show a meaningful "translated" text like [Translated to X]: original text,
-            // with a few common words swapped for a bit of charm.
-            // In a real app, you would call an API like Google Translate or DeepL.
-            function simulateTranslation(text, fromLang, toLang) {
-                if (!text.trim()) return '';
-
-                // If same language, just return original (but we indicate)
-                if (fromLang === toLang) {
-                    return text;
-                }
-
-                // A small dictionary for a few common words to make it look a bit translated.
-                const miniDict = {
-                    'hello': { es: 'hola', fr: 'bonjour', de: 'hallo', it: 'ciao', pt: 'olá', ru: 'привет', ja: 'こんにちは', ko: '안녕하세요', zh: '你好', ar: 'مرحبا', hi: 'नमस्ते' },
-                    'world': { es: 'mundo', fr: 'monde', de: 'welt', it: 'mondo', pt: 'mundo', ru: 'мир', ja: '世界', ko: '세계', zh: '世界', ar: 'عالم', hi: 'दुनिया' },
-                    'good': { es: 'bueno', fr: 'bon', de: 'gut', it: 'buono', pt: 'bom', ru: 'хорошо', ja: '良い', ko: '좋은', zh: '好', ar: 'جيد', hi: 'अच्छा' },
-                    'morning': { es: 'mañana', fr: 'matin', de: 'morgen', it: 'mattina', pt: 'manhã', ru: 'утро', ja: '朝', ko: '아침', zh: '早上', ar: 'صباح', hi: 'सुबह' },
-                    'thank': { es: 'gracias', fr: 'merci', de: 'danke', it: 'grazie', pt: 'obrigado', ru: 'спасибо', ja: 'ありがとう', ko: '감사', zh: '谢谢', ar: 'شكرا', hi: 'धन्यवाद' },
-                    'you': { es: 'tú', fr: 'vous', de: 'du', it: 'tu', pt: 'você', ru: 'ты', ja: 'あなた', ko: '당신', zh: '你', ar: 'أنت', hi: 'तुम' },
-                    'how': { es: 'cómo', fr: 'comment', de: 'wie', it: 'come', pt: 'como', ru: 'как', ja: 'どう', ko: '어떻게', zh: '怎么', ar: 'كيف', hi: 'कैसे' },
-                    'are': { es: 'estás', fr: 'êtes', de: 'bist', it: 'sei', pt: 'está', ru: 'ты', ja: 'です', ko: '입니까', zh: '是', ar: 'هل', hi: 'है' },
-                };
-
-                // Try a simple word-by-word replacement for known words (case-insensitive)
-                let translated = text;
-                // We'll process tokens but preserve case roughly (just for demo)
-                const words = text.split(/(\b\w+\b)/); // split but keep delimiters
-                for (let i = 0; i < words.length; i++) {
-                    const word = words[i];
-                    const lower = word.toLowerCase();
-                    if (miniDict[lower] && miniDict[lower][toLang]) {
-                        // Preserve capitalization: if original is capitalized, capitalize replacement
-                        let replacement = miniDict[lower][toLang];
-                        if (word[0] === word[0].toUpperCase() && word.length > 0) {
-                            replacement = replacement.charAt(0).toUpperCase() + replacement.slice(1);
-                        }
-                        words[i] = replacement;
-                    }
-                }
-                translated = words.join('');
-
-                // Also add a little prefix to make it clear it's a simulation, but keep it subtle
-                // But we want it to be usable, so just return the (mostly) original with some swapped words.
-                // For better UX we just prefix with a tag (like real translators often show "translated by ...")
-                // Actually, to be more genuine: we just return the simulated translation, but if not a single word
-                // matched we indicate in parentheses.
-                let anyReplacement = false;
-                for (let w of text.toLowerCase().match(/\b\w+\b/g) || []) {
-                    if (miniDict[w] && miniDict[w][toLang]) {
-                        anyReplacement = true;
-                        break;
-                    }
-                }
-                if (!anyReplacement) {
-                    // No common word matched: return original text but note language
-                    return `[${langNames[toLang] || toLang}] ${text}`;
-                }
-
-                // Return the partially translated text (looks like translation)
-                return translated;
+            // Real Google Cloud translation via server-side Vercel function.
+            async function performTranslation() {
+                const text = sourceText.value.trim();
+                if (!text) { translatedText.value = ''; setStatus('✏️ Enter some text first', true); return; }
+                translateBtn.disabled = true;
+                setStatus('🌐 Translating…');
+                try {
+                    const response = await fetch('/api/translate', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text, source: sourceLang.value, target: targetLang.value })
+                    });
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Translation failed');
+                    translatedText.value = data.translatedText;
+                    translatedText.dir = ['ur','ar'].includes(targetLang.value) ? 'rtl' : 'auto';
+                    setStatus('✅ Translation complete');
+                } catch (error) {
+                    translatedText.value = '';
+                    setStatus('❌ ' + error.message, true);
+                } finally { translateBtn.disabled = false; }
             }
 
-            // ---- Main translate function ----
-            function performTranslation() {
-                const text = sourceText.value;
-                if (!text.trim()) {
-                    translatedText.value = '';
-                    setStatus('✏️ Enter some text first', true);
-                    return;
-                }
-
-                const from = sourceLang.value;
-                const to = targetLang.value;
-
-                // Simulate translation (with a small delay for realism? No need.)
-                const result = simulateTranslation(text, from, to);
-                translatedText.value = result;
-                setStatus(`🌐 Translated (${langNames[from]} → ${langNames[to]})`);
+            const micBtn = document.getElementById('micBtn');
+            const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!Recognition) {
+                micBtn.disabled = true;
+                micBtn.title = 'Voice input is not supported in this browser. You can still type or paste.';
+            } else {
+                const recognition = new Recognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                const speechLocales = {en:'en-US',es:'es-ES',fr:'fr-FR',de:'de-DE',it:'it-IT',
+                    pt:'pt-BR',ru:'ru-RU',ja:'ja-JP',ko:'ko-KR',zh:'zh-CN',ar:'ar-SA',
+                    hi:'hi-IN',id:'id-ID',ur:'ur-PK',pa:'pa-IN'};
+                micBtn.addEventListener('click', () => {
+                    recognition.lang = speechLocales[sourceLang.value] || navigator.language || 'en-US';
+                    try { recognition.start(); } catch (e) { setStatus('⚠️ Microphone already active', true); }
+                });
+                recognition.onstart = () => { micBtn.textContent = '🔴 Listening…'; setStatus('🎤 Speak now'); };
+                recognition.onend = () => { micBtn.textContent = '🎤 Speak'; };
+                recognition.onerror = (event) => setStatus('⚠️ Voice input: ' + event.error, true);
+                recognition.onresult = (event) => {
+                    const transcript = Array.from(event.results).map(r => r[0].transcript).join(' ');
+                    sourceText.value = [sourceText.value.trim(), transcript].filter(Boolean).join(' ');
+                    updateCounter();
+                    setStatus('✅ Speech captured — press Translate');
+                };
             }
 
             // ---- Event listeners ----
